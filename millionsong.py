@@ -100,6 +100,8 @@ def feature_scaling(matrix):
 
     return matrix_copy
 
+def cosine_distance(song1, song2):
+    return 1 - np.cos(np.dot(song1, song2) * (1 / (np.sqrt(np.sum(song1**2))*np.sqrt(np.sum(song2**2)))))/np.pi
 
 
 def find_duplicates(feature_data_matrix, r, b, sigma):
@@ -125,10 +127,15 @@ def find_duplicates(feature_data_matrix, r, b, sigma):
     print("Signatures output : ", signatures)
 
     start_band_index = 0
-    end_band_index = start_band_index + b
+   
+    band_gap = int(round(signatures.shape[0]/b))
+    
+    print("Gap: ", band_gap)
 
-    #buckets = dict.empty()
+    end_band_index = start_band_index + band_gap 
 
+    buckets = dict()
+    
     while end_band_index < signatures.shape[0]:
         print("Start index : ", start_band_index, " and end index: ", end_band_index)
 
@@ -136,12 +143,44 @@ def find_duplicates(feature_data_matrix, r, b, sigma):
         orig_number_of_rows = band.shape[0]
 
         print("Band:")
-        for i in range(band.shape[0]):
-            print(band[i])
+        number_of_rows = band.shape[0]
+         
+        l = []
+        for j in range(band.shape[1]):
+            t = [band[i][j] for i in range(number_of_rows)]
+            hashed_column = hash(tuple(t))
+            if hashed_column not in buckets:
+                buckets[hashed_column] = [(start_band_index, end_band_index)]
+            else:
+                buckets[hashed_column].append((start_band_index, end_band_index))
 
+        #print([tuple([band[i][j] for i in range(number_of_rows)]) for j in range(band.shape[1])])
+        
         start_band_index = end_band_index+1
-        end_band_index += b
+        end_band_index += band_gap
 
+    n_buckets = dict()
+    n_buckets = {k:v for k,v in buckets.items() if len(v) > 1}
+   
+    print("Orig buckets: ", len(buckets))
+    print("Reduced buckets: ", len(n_buckets))
+    #print("Buckets: ", buckets)
+
+    '''feature_data_matrix_transpose = feature_data_matrix.transpose()
+
+    for intervals in n_buckets.values():
+        for i in intervals:
+            start = i[0]
+            end = i[1]
+            
+            while start < end:
+                temps = start + 1
+                print("temps ", temps, " start: ", start)
+                while temps < end:
+                    if cosine_distance(feature_data_matrix[start], feature_data_matrix[temps]) <= sigma:
+                        print("Found potential neighbour")
+                    temps +=1
+                start += 1'''
 
     return 0
 
@@ -173,7 +212,7 @@ feature_data_matrix = extract_fields_full(['duration',
 time2 = time.time()
 print("Real time elapsed for extract fields: ", time2-time1)
 time1 = time.time()
-find_duplicates(feature_data_matrix, 20, 3, 5)
+find_duplicates(feature_data_matrix, 64, 3, 2)
 time2 = time.time()
 
 print("Time taken to find duplicates: ", time2-time1)
