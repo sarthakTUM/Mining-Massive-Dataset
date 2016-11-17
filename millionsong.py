@@ -117,27 +117,27 @@ def find_duplicates(feature_data_matrix, r, b, sigma):
     
     #   Uncomment to show relations
     #   print("Showing relation_matrix: ")
-    relation_matrix = np.dot(feature_data_matrix, v.transpose())
-    print(relation_matrix)
-    print("relation_matrix:s shape: ", relation_matrix.shape)
+    signature_matrix = np.dot(feature_data_matrix, v.transpose())
+    print(signature_matrix)
+    print("signature_matrix:s shape: ", signature_matrix.shape)
 
-    relations = np.sign(relation_matrix).transpose()
-    print("Relations output : ", relations)
+    signatures = np.sign(signature_matrix).transpose()
+    print("Signatures output : ", signatures)
 
     start_band_index = 0
     end_band_index = start_band_index + b
 
     #buckets = dict.empty()
 
-    while end_band_index < feature_data_matrix.shape[0]:
+    while end_band_index < signatures.shape[0]:
         print("Start index : ", start_band_index, " and end index: ", end_band_index)
 
-        band = feature_data_matrix[start_band_index:end_band_index]
+        band = signatures[start_band_index:end_band_index]
         orig_number_of_rows = band.shape[0]
 
-        number_of_rows_per_lsh_row = int(round(orig_number_of_rows/r))
-
-        print("LSH row height: ", number_of_rows_per_lsh_row)
+        print("Band:")
+        for i in range(band.shape[0]):
+            print(band[i])
 
         start_band_index = end_band_index+1
         end_band_index += b
