@@ -88,18 +88,6 @@ def generate_random_v(rows, cols):
     #print(v)
     return v
 
-def feature_scaling(matrix):
-    matrix_copy = np.empty(matrix.shape)
-    
-    for i in range(matrix.shape[0]):
-        row = matrix[i]
-        min_element_row = min(row)
-        max_element_row = max(row)
-        for j in range(len(row)):
-            matrix_copy[i][j] = (row[j] - min_element_row) / (max_element_row - min_element_row)
-
-    return matrix_copy
-
 def cosine_distance(song1, song2):
     return 1 - np.cos(np.dot(song1, song2) * (1 / (np.sqrt(np.sum(song1**2))*np.sqrt(np.sum(song2**2)))))/np.pi
 
