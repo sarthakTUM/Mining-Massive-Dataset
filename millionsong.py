@@ -4,7 +4,7 @@ import numpy as np
 from sklearn.preprocessing import normalize
 import time
 import random
-path_to_million_song_dataset = "millionsongsubset_full.tar.gz"
+path_to_million_song_dataset = "G:\\MS\\TUM\\courses\\Mining Massive Datasets\\millionsongsubset_full.tar.gz"
 #hash_vector = np.empty((20))
 #for i in range(20):
 #    hash_vector[i] = 2**i
@@ -12,7 +12,7 @@ path_to_million_song_dataset = "millionsongsubset_full.tar.gz"
 hash_vector = np.array([2**i for i in range(64)])
 
 print("hash vectore shape : ", hash_vector.shape)
-print ("hashx vector : ", hash_vector)
+print ("hash vector : ", hash_vector)
 
 duplicate_songs = dict()
 
@@ -66,11 +66,13 @@ def generate_random_v(rows, cols):
 def banding(signature_matrix, num_bands, rows_in_band, num_RV):
     band_start_index = 0
     band_end_index = rows_in_band - 1 
+    i = 0
    
     while(band_end_index <= num_RV):
         
         print("starting index: ",  band_start_index, " and band end index: ", band_end_index)
         band = signature_matrix[band_start_index:band_end_index+1]
+        print("band ", i+1, " shape : ", band.shape)
         hashing(band)
         band_start_index = band_end_index + 1
         band_end_index += rows_in_band
@@ -89,9 +91,10 @@ def hashing(band):
     
     for j in range(band.shape[1]):
         local_song_signature = band[:, j]
+        #   print("local song signature shape: ", local_song_signature.shape)
         #   print("local song signature shape before transpose: ", local_song_signature.shape)
         hash_value = getHashValue(local_song_signature)
-        #   print("hash value is: ", hashValue)
+        #   print("hash value is: ", hash_value)
         if hash_value not in hash_buckets: 
             hash_buckets[hash_value] = [j]#hash_buckets[hash_value] + 1
         else:
@@ -108,11 +111,14 @@ def hashing(band):
 
 def find_exact_cosine_distance(hash_buckets):
    
+    i = 0
+    print("number of hash buckets : ", len(hash_buckets))
     for bucket in hash_buckets.items():
+        #   print("bucket ", i+1, " length: ", len(bucket))
         i = 0
         while i < len(bucket):
-            if len(bucket) > 2:
-                print("Bucket lenght: ", len(bucket), " hash_buckets:  ", len(hash_buckets))
+            if len(bucket) >= 2:
+                print("Bucket length: ", len(bucket), " hash_buckets:  ", len(hash_buckets))
             if i not in duplicate_songs:
                 duplicate_songs[i] = set([])
            
@@ -139,15 +145,17 @@ def cosine_similarity(song1, song2):
     #return 1 - np.arccos(angle)/np.pi
 
 def getHashValue(local_song_signature):
+    
     hashValue = 0
     
     #   print("local song signature shape after transpose: ", local_song_signature.shape)
+    
     hashValue = np.dot(local_song_signature, hash_vector)
     return hashValue
         
 def find_duplicates(feature_data_matrix, r, b, sigma):
     dimensions = feature_data_matrix.shape
-
+    print("FDM shape : ", dimensions)
     time1 = time.time()
     num_of_RV = r*b
     print("number of RV : ", num_of_RV)
@@ -164,13 +172,13 @@ def find_duplicates(feature_data_matrix, r, b, sigma):
     #   print("Showing relation_matrix: ")
     v = v.transpose()
     print ("shape of RV matrix : ", v.shape)
-    RV_dimensions = v.shape;
+    #   RV_dimensions = v.shape;
     #signature_matrix = np.empty((dimensions[0], num_of_RV))
     
     signature_matrix = np.dot(feature_data_matrix, v)
     
     #   signature_matrix = np.dot(feature_data_matrix, v.transpose())
-    print(signature_matrix)
+    print("signature Matrix : ", signature_matrix)
     print("signature_matrix:s shape: ", signature_matrix.shape)
 
     #signatures = np.sign(signature_matrix).transpose()
@@ -180,7 +188,8 @@ def find_duplicates(feature_data_matrix, r, b, sigma):
                 signature_matrix[i][j] = 1
             else:
                 signature_matrix[i][j] = 0
-    print("Signatures output : ", signature_matrix.transpose())
+    print("Signature Matrix after transformation : ", signature_matrix.transpose())
+    print("Signature Matrix shape after transformation", signature_matrix.transpose())
     
     banding(signature_matrix.transpose(), b, r, num_of_RV)
     return 0
