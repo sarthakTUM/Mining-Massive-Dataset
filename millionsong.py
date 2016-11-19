@@ -70,9 +70,9 @@ def banding(signature_matrix, num_bands, rows_in_band, num_RV):
    
     while(band_end_index <= num_RV):
         
-        print("starting index: ",  band_start_index, " and band end index: ", band_end_index)
+        #   print("starting index: ",  band_start_index, " and band end index: ", band_end_index)
         band = signature_matrix[band_start_index:band_end_index+1]
-        print("band ", i+1, " shape : ", band.shape)
+        #   print("band ", i+1, " shape : ", band.shape)
         hashing(band)
         band_start_index = band_end_index + 1
         band_end_index += rows_in_band
@@ -97,41 +97,42 @@ def hashing(band):
         #   print("hash value is: ", hash_value)
         if hash_value not in hash_buckets: 
             hash_buckets[hash_value] = [j]#hash_buckets[hash_value] + 1
+            
         else:
             hash_buckets[hash_value].append(j) 
     
     for bucket in hash_buckets.items():
-        if len(bucket) > 1:
-            candidate_pairs += len(bucket)
+        if len(bucket[1]) > 1:
+            candidate_pairs += len(bucket[1])
         
     find_exact_cosine_distance(hash_buckets)
 
 
-    print("candidate pairs : " , candidate_pairs)
+    #   print("candidate pairs : " , candidate_pairs)
 
 def find_exact_cosine_distance(hash_buckets):
    
     i = 0
-    print("number of hash buckets : ", len(hash_buckets))
+    #   print("number of hash buckets : ", len(hash_buckets))
     for bucket in hash_buckets.items():
         #   print("bucket ", i+1, " length: ", len(bucket))
         i = 0
-        while i < len(bucket):
-            if len(bucket) >= 2:
-                print("Bucket length: ", len(bucket), " hash_buckets:  ", len(hash_buckets))
+        while i < len(bucket[1]):
+            #   if len(bucket[1]) >= 2:
+                #   print("Bucket length: ", len(bucket), " bucket items: ", bucket, " hash_buckets:  ", len(hash_buckets))
             if i not in duplicate_songs:
                 duplicate_songs[i] = set([])
            
             j = i + 1
-            while j < len(bucket):
+            while j < len(bucket[1]):
                 if j not in duplicate_songs[i]:
                     cosine_value = cosine_similarity(feature_data_matrix[i], feature_data_matrix[j]) 
                     
-                    #print("Value: ", cosine_value, " i: ", i, " j:", j)
+                    #   print("Value: ", cosine_value, " i: ", i, " j:", j)
                     
                     if cosine_value < sigma: 
-                        duplicate_songs[i] |= [i]
-                        print("Found a smaller value")
+                        duplicate_songs[i].update([j])
+                        #   print("Found a smaller value")
 
                 j += 1
             i+=1
