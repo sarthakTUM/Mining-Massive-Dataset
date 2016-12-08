@@ -70,36 +70,74 @@ def parse_triplets(file_path, max_rows, whole_dataset, b, use_vectors, use_dikt)
     # Too slow method maybe?
 
     print("Hihgest playcount: ", highest_playcount)
-    #print("Binsteps: ", int(highest_playcount/b))
-    #play_count_bin_step = int(highest_playcount/b)
    
     for i in range(len(play_count)):
         bin_value = 0
         while bin_value < b:
             if 2**(bin_value) <= play_count[i] < (2**(bin_value+1)-1):
-                #print("Broke on : ", bin_value, " with ", play_count[i])
-                #if bin_value > 8:
-                #    print("Checking :" , 2**(bin_value), " and ", (2**(bin_value+1)-1))
-                #    print("With bin_value: ", bin_value)
                 play_count[i] = bin_value
                 break
             bin_value += 1
-        #if bin_value > 110:
-        #    print("Success: ", play_count[i], " and ", bin_value)
 
-    '''distribution = [0 for i in range(10)]
-    for i in play_count:
-        print("I is : ", i, " with len ", len(distribution))
-        distribution[i] +=1
-
-    plt.plot([0,1,2,3,4,5,6,7,8,9], distribution)
-    plt.show()'''
 
     return (users, songs, play_count)
 
 def test_sum_rows(matrix):
     vector = matrix.sum(axis=1)
     print(vector)
+
+
+def remove_lesser_occurance_of_songs_users(csr):
+    #sum_over_columns = crc.sum(axis=0)
+
+    shape_of_original = csr.shape
+    ccm = csr
+    while shape_of_original[0] != 0 and shape_of_original[1] != 0:
+        sum_over_rows = ccm.sum(axis=1)
+        element_list = list(ccm.toarray())
+        
+        
+
+        for i in range(len(sum_over_rows)):
+            if sum_over_rows[i] > 5:
+                del element_list[i]
+        
+        ccm = sp.csc_matrix(np.array(element_list))
+        sum_over_columns = ccm.sum(axis=0)
+
+        element_list = list(ccm.toarray())
+
+        for i in range(len(sum_over_columns)):
+            if sum_over_columns[i] > 5:
+                del element_list[i]
+        
+        ccm = sp.ccm_matrix(np.array(element_list))
+        if shape_of_original[0] == ccm.shape[0] and shape_of_original[1] == ccm.shape[1]:
+            break
+    return ccm
+    #print(sum_over_rows)
+    #print(sum_over_columns)
+
+def remove_row_in_LIL(matrix, i):
+    matrix.rows = np.delete(matrix.rows, i)
+    matrix.data = np.delete(matrix.data, i)
+    matrix._shape = (matrix._shape[0]-1, matrix._shape[1])
+
+def remove_lesser_occurance_of_songs_users_LIL(matrix):
+    # Convert to LIL format
+    lil_mat = sp.lil_matrix(matrix)
+    orig_shape = lil_mat.shape
+
+    while True:
+        row_sums = lil_mat.sum(axis=1)
+        for i in range(len(row_sums)):
+            if row_sums[i] < 5:
+                remove_row_in_LIL()
+
+
+    return lil_mat
+
+    print(rows)
 
 if len(sys.argv) < 2:
     print("To few arguments...")
@@ -109,7 +147,11 @@ print("Parsing the triplets...")
 users, songs, play_count = parse_triplets(sys.argv[1], 300000, False, 10, True, False)
 
 # Easiest way to create a sparse matrix is done by using the vectors
-resulting_sparse_matrix = create_sparse_matrix(users, songs, play_count, row=True)
+resulting_sparse_row_matrix = create_sparse_matrix(users, songs, play_count, row=True)
+resulting_sparse__column_matrix = create_sparse_matrix(users, songs, play_count, row=False)
 print("Done parsing the triplets -> Sparse matrix")
-test_sum_rows(resulting_sparse_matrix)
+#test_sum_rows(resulting_sparse_matrix)
+#n_matrix = remove_lesser_occurance_of_songs_users(resulting_sparse_row_matrix)
+n_matrix = remove_lesser_occurance_of_songs_users_LIL(resulting_sparse_row_matrix)
+print(n_matrix.shape)
 sys.stdout.flush()
