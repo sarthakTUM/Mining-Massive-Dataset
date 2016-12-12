@@ -173,7 +173,51 @@ def pick_random_test_set(M, number_of_random_elements):
     M_s.eliminate_zeros()
     M_s = sp.csr_matrix(M_s)
     return M_s, random_picked_values
+
+def find_method(M, Q, P):
+    P = sp.csc_matrix(P)
+    Q = sp.csr_matrix(Q)
+    M = sp.csr_matrix(M)
+
+    print("P sh:", P.shape)
+    print("Q sh:", Q.shape)
+        
+    m_shape = M.shape
     
+    print(type(M[0,:]))
+
+    print("Q.T shape: ", Q.T.shape)
+    print("Q shape: ", Q.shape)
+    #print(np.einsum('ji,j->ji', Q, Q))
+
+    qTq = np.sum(np.dot(Q.T,Q).diagonal())
+    print("qTq: ", qTq)
+    #print(qTq.shape)
+
+    pTp = np.sum(np.dot(P.T, P).diagonal())
+    print("pTp: ", pTp)
+    
+    for x in range(m_shape[1]):
+        m = M[:,x]
+        print("Q.T shape: ", Q.T.shape)
+        print("m.T shape: ",  m.T.shape)
+
+        print("Q shape: ", Q.shape)
+        print("m shape: ",  m.shape)
+        p_x = (1/pTp) * np.dot(Q.T, m)
+        
+            
+        print(P.data[P.indptr[x]:P.indptr[x+1]])
+
+        print("p_x: ", p_x.shape)
+
+        break
+
+    #print(m.shape)
+    #print(l.shape)
+    print("Done")
+    
+
 if len(sys.argv) < 2:
     print("To few arguments...")
     sys.exit(1)
@@ -217,5 +261,6 @@ Q, Pt = singular_value_decomp(resulting_sparse_matrix)
 # Perform AO using P,Q
 Alternating_optimization(Q,Pt, resulting_sparse_matrix)
 
+find_method(resulting_sparse_matrix, Q, Pt.T)
 print("Orig shape: ", shape_orig, " Final shape: ", shape_after)
 sys.stdout.flush()
