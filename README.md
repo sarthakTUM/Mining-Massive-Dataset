@@ -3,6 +3,7 @@ INFO -
 
 CODE -
 Please go inside  mmd-task1  folder for task 1
+Please go inside  mmd-task2  folder for task 2
 
 HELP -
 	If you have any query, please contact us:
