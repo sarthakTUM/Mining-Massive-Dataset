@@ -175,7 +175,7 @@ def pick_random_test_set(M, number_of_random_elements):
     return M_s, random_picked_values
 
 def find_method(M, Q, P):
-    P = sp.csc_matrix(P)
+    P = sp.csr_matrix(P)
     Q = sp.csr_matrix(Q)
     M = sp.csr_matrix(M)
 
@@ -199,20 +199,31 @@ def find_method(M, Q, P):
     
     for x in range(m_shape[1]):
         m = M[:,x]
-        print("Q.T shape: ", Q.T.shape)
-        print("m.T shape: ",  m.T.shape)
+        #print("Q.T shape: ", Q.T.shape)
+        #print("m.T shape: ",  m.T.shape)
 
-        print("Q shape: ", Q.shape)
-        print("m shape: ",  m.shape)
+        #print("Q shape: ", Q.shape)
+        #print("m shape: ",  m.shape)
         p_x = (1/pTp) * np.dot(Q.T, m)
         
-            
-        print(P.data[P.indptr[x]:P.indptr[x+1]])
+        #print("P shape first : ", P.shape)
+        P = sp.vstack((sp.vstack((P[:x], p_x.T)), P[x+1:]))
+        #print("P shape after : ", P.shape)
+        #print(P.data[P.indptr[x]:P.indptr[x+1]])
 
-        print("p_x: ", p_x.shape)
+        #print("p_x: ", p_x.shape)
 
-        break
+    print("Done with P")
 
+    for i in range(m_shape[0]):
+        m = M[i,:]
+        q_i = (1/qTq) * np.dot(P.T, m.T)
+
+        Q = sp.vstack((sp.vstack((Q[:i], q_i.T)), Q[i+1:]))
+
+    print(np.dot(Q,P.T).shape)
+
+    np.sum(np.norm('l2', M - np.dot(Q,P.T)), axis=1)
     #print(m.shape)
     #print(l.shape)
     print("Done")
@@ -254,7 +265,7 @@ shape_final = resulting_sparse_matrix.shape
 print("Picking random test set: ")
 resulting_sparse_matrix, test_set = pick_random_test_set(resulting_sparse_matrix, size_of_test_set)
 
-print("Got random test set: ", test_set)
+#print("Got random test set: ", test_set)
 
 # Initial P & Q values obtained using SVD
 Q, Pt = singular_value_decomp(resulting_sparse_matrix)
