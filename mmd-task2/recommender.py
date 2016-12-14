@@ -6,6 +6,8 @@ import sys
 import matplotlib.pyplot as plt
 import random
 import time
+from scipy import sparse
+from sklearn.linear_model import Ridge
 
 # The sparse matrix function
 def create_sparse_matrix(users, songs, play_count, row=True):
@@ -109,7 +111,7 @@ def singular_value_decomp(sparse_matrix):
     print("Matrix shape : ", sparse_matrix.shape)
     # print("Sparse Matrix : ", sparse_matrix)
     
-    U, sigma, Vt = spl.svds(sparse_matrix)
+    U, sigma, Vt = spl.svds(sparse_matrix, k=30)
     print("U shape : ", U.shape, " sigma shape : ", sigma.shape, " V shape : ", Vt.shape)
     
     sigma = np.diag(sigma)
@@ -123,6 +125,11 @@ def Alternating_optimization(Q,Pt, user_song_matrix):
 
     dot_sum = 0
     Qt = np.transpose(Q)
+    #clf = Ridge(alpha=1.0)
+    #clf.fit(Pt.transpose(), user_song_matrix.todense().transpose())
+    #pred3 = clf.coef_
+    #print("Pred3 : ", pred3)
+    #print("Pred3 shape : ", pred3.shape)
 #==============================================================================
 #     row_vector= Q[0, :]
 #     column_vector = Q[:, 0]
@@ -133,14 +140,60 @@ def Alternating_optimization(Q,Pt, user_song_matrix):
 #     
 #==============================================================================
 
-    print("Shape of Qt : ", Qt.shape)
-    #print("Q : ", Q, " and Qt : ", Qt)
+    diff = 99999
+    while(diff != 0):
+        
 
-# have to impletement Minimize function
+        A = minimize(Q, user_song_matrix.todense())
+        B = minimize(A, user_song_matrix.todense().transpose())
+        print("Shapes : ")
+        print("A shape : ", A.shape)
+        print("B shape : ", B.shape)
+        diff = np.linalg.norm(user_song_matrix.todense() - np.dot(B, A.transpose()))
+        print("Difference is : ", diff)
+        
+        Q = B
+        
+
+                
 #==============================================================================
-#     Q = minimize(Q, Pt, 0, dot_sum)
-#     Pt = minimize(Q, Pt, 1, dot_sum)
+#     print("Shape of Qt : ", Qt.shape)
+#     #print("Q : ", Q, " and Qt : ", Qt)
+#     
+#     print("Shapes : ")
+#     print("Q : ", Q.shape)
+#     print("Pt : ", Pt.shape)
+#     print("USM : ", user_song_matrix.shape)
+#     
+#     print("Matrices : ")
+#     print("Q : ", Q)
+#     print("Pt : ", Pt)
+#     print("USM : ", user_song_matrix.todense())
+#     
+#     clf = Ridge(alpha=1.0)
+#     clf.fit(Q, user_song_matrix.todense())
+#     pred2 = clf.coef_
+#     pred = clf.score(Q, user_song_matrix.todense())
+#     print("Pred : ", pred)
+#     print("Pred2 : ", pred2)
+#     print("Pred2 shape : ", pred2.shape)
+#     
+#     clf.fit(Pt.transpose(), user_song_matrix.todense().transpose())
+#     pred3 = clf.coef_
+#     print("Pred3 : ", pred2)
+#     print("Pred3 shape : ", pred3.shape)
+#     
+#     M = np.dot(pred3, pred2.transpose())
+#     np.linalg.norm(M)
+#     np.linalg.norm(user_song_matrix.todense)
 #==============================================================================
+    
+    
+
+def minimize(data, target):
+    clf = Ridge(alpha=10.0, fit_intercept=False)
+    clf.fit(data, target)
+    return clf.coef_
 
 #
 #   This functions picks a random set of size: number_of_random_elements
@@ -272,6 +325,6 @@ Q, Pt = singular_value_decomp(resulting_sparse_matrix)
 # Perform AO using P,Q
 Alternating_optimization(Q,Pt, resulting_sparse_matrix)
 
-find_method(resulting_sparse_matrix, Q, Pt.T)
+#find_method(resulting_sparse_matrix, Q, Pt.T)
 print("Orig shape: ", shape_orig, " Final shape: ", shape_after)
 sys.stdout.flush()
