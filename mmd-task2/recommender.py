@@ -125,6 +125,7 @@ def Alternating_optimization(Q,Pt, user_song_matrix):
 
     dot_sum = 0
     Qt = np.transpose(Q)
+    user_song_matrix = sp.csr_matrix(user_song_matrix)
     #clf = Ridge(alpha=1.0)
     #clf.fit(Pt.transpose(), user_song_matrix.todense().transpose())
     #pred3 = clf.coef_
@@ -141,6 +142,7 @@ def Alternating_optimization(Q,Pt, user_song_matrix):
 #==============================================================================
 
     diff = 99999
+    pre_diff = float('inf')
     while(diff != 0):
         
 
@@ -149,8 +151,18 @@ def Alternating_optimization(Q,Pt, user_song_matrix):
         print("Shapes : ")
         print("A shape : ", A.shape)
         print("B shape : ", B.shape)
-        diff = np.linalg.norm(user_song_matrix.todense() - np.dot(B, A.transpose()))
-        print("Difference is : ", diff)
+        S = sp.csr_matrix(user_song_matrix - np.dot(B, A.T))
+        S.data = np.power(S.data, 2)
+        diff = np.sum(np.sum(S,axis=1),axis=0)
+        
+        real_diff = np.absolute(pre_diff - diff)
+
+        if real_diff < 1.35:
+            break
+        else:
+            pre_diff = diff
+        #diff = np.linalg.norm(user_song_matrix.todense() - np.dot(B, A.transpose()))
+        print("Difference is : ", real_diff)
         
         Q = B
         
