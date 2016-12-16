@@ -126,23 +126,9 @@ def Alternating_optimization(Q,Pt, user_song_matrix):
     dot_sum = 0
     Qt = np.transpose(Q)
     user_song_matrix = sp.csr_matrix(user_song_matrix)
-    #clf = Ridge(alpha=1.0)
-    #clf.fit(Pt.transpose(), user_song_matrix.todense().transpose())
-    #pred3 = clf.coef_
-    #print("Pred3 : ", pred3)
-    #print("Pred3 shape : ", pred3.shape)
-#==============================================================================
-#     row_vector= Q[0, :]
-#     column_vector = Q[:, 0]
-#     print(column_vector.shape[0])
-# 
-#     print("Row vector : ", row_vector)
-#     print("Col Vector : ", column_vector)
-#     
-#==============================================================================
 
     diff = 99999
-    pre_diff = float('inf')
+    pre_diff = 8500
     while(diff != 0):
         
 
@@ -151,59 +137,29 @@ def Alternating_optimization(Q,Pt, user_song_matrix):
         print("Shapes : ")
         print("A shape : ", A.shape)
         print("B shape : ", B.shape)
-        S = sp.csr_matrix(user_song_matrix - np.dot(B, A.T))
-        S.data = np.power(S.data, 2)
+        S = user_song_matrix - np.dot(B, A.T)
+        #S.data = np.power(S.data, 2)
+        S = np.power(S, 2)
         diff = np.sum(np.sum(S,axis=1),axis=0)
         
         real_diff = np.absolute(pre_diff - diff)
 
-        if real_diff < 1.35:
+        if real_diff < 0.5:
             break
         else:
             pre_diff = diff
-        #diff = np.linalg.norm(user_song_matrix.todense() - np.dot(B, A.transpose()))
         print("Difference is : ", real_diff)
         
         Q = B
-        
-
-                
-#==============================================================================
-#     print("Shape of Qt : ", Qt.shape)
-#     #print("Q : ", Q, " and Qt : ", Qt)
-#     
-#     print("Shapes : ")
-#     print("Q : ", Q.shape)
-#     print("Pt : ", Pt.shape)
-#     print("USM : ", user_song_matrix.shape)
-#     
-#     print("Matrices : ")
-#     print("Q : ", Q)
-#     print("Pt : ", Pt)
-#     print("USM : ", user_song_matrix.todense())
-#     
-#     clf = Ridge(alpha=1.0)
-#     clf.fit(Q, user_song_matrix.todense())
-#     pred2 = clf.coef_
-#     pred = clf.score(Q, user_song_matrix.todense())
-#     print("Pred : ", pred)
-#     print("Pred2 : ", pred2)
-#     print("Pred2 shape : ", pred2.shape)
-#     
-#     clf.fit(Pt.transpose(), user_song_matrix.todense().transpose())
-#     pred3 = clf.coef_
-#     print("Pred3 : ", pred2)
-#     print("Pred3 shape : ", pred3.shape)
-#     
-#     M = np.dot(pred3, pred2.transpose())
-#     np.linalg.norm(M)
-#     np.linalg.norm(user_song_matrix.todense)
-#==============================================================================
+       
+    Mdiff = np.dot(B, A.T)
+    diff_final = np.linalg.norm(user_song_matrix - Mdiff)
     
-    
+    print(diff_final)
+    return Mdiff
 
 def minimize(data, target):
-    clf = Ridge(alpha=10.0, fit_intercept=False)
+    clf = Ridge(alpha=1.0, fit_intercept=False)
     clf.fit(data, target)
     return clf.coef_
 
@@ -233,7 +189,6 @@ def pick_random_test_set(M, number_of_random_elements):
                                     M_s.col[random_index], 
                                     M_s.data[random_index]))
         M_s.data[random_index] = 0
-        #print(random_picked_values[len(random_picked_values)-1])
 
     M_s.eliminate_zeros()
     M_s = sp.csr_matrix(M_s)
@@ -293,6 +248,15 @@ def find_method(M, Q, P):
     #print(l.shape)
     print("Done")
     
+def rmse(Mdiff, test_set):
+    
+    y_sum = 0
+    for test in test_set:
+        y_sum += (test[2] - Mdiff[test[0]][test[1]])**2
+
+    rmse = np.sqrt(y_sum/len(test_set))
+
+    print("RMSE: ", rmse)
 
 if len(sys.argv) < 2:
     print("To few arguments...")
@@ -335,7 +299,9 @@ resulting_sparse_matrix, test_set = pick_random_test_set(resulting_sparse_matrix
 # Initial P & Q values obtained using SVD
 Q, Pt = singular_value_decomp(resulting_sparse_matrix)
 # Perform AO using P,Q
-Alternating_optimization(Q,Pt, resulting_sparse_matrix)
+Mdiff = Alternating_optimization(Q,Pt, resulting_sparse_matrix)
+
+rmse(Mdiff, test_set)
 
 #find_method(resulting_sparse_matrix, Q, Pt.T)
 print("Orig shape: ", shape_orig, " Final shape: ", shape_after)
