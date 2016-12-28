@@ -6,6 +6,7 @@ import sys
 import matplotlib.pyplot as plt
 import random
 import time
+import math
 from scipy import sparse
 from sklearn.linear_model import Ridge
 
@@ -152,7 +153,53 @@ def pick_random_test_set(M, number_of_random_elements):
     M_s = sp.csr_matrix(M_s)
     return M_s, random_picked_values
 
-def gradient_descent(M, P, Q):
+def calc_loss(M, Q, Pt):
+    loss = 0
+	#TODO we have to optimize it
+    lamda1 = 0.5;lamda2 = 0.5
+    M = M.tocoo()
+    print("size of data", len(M.data)); print("size of row", len(M.row)) 
+    print("size of col", len(M.col))
+	
+    for d in range (len(M.data)):
+        r = M.data[d]; x = M.row[d]; i = M.col[d];
+        #print("r x i d", r,x,i,d)
+		#TODO FIXME which one is correct ?
+        #loss += math.pow((r - (np.dot(Q[i,:],Pt[:,x]))),2)
+        loss += math.pow((r - (np.dot(Q[x,:],Pt[:,i]))),2)
+    loss = loss + np.sum(np.square(np.linalg.norm(Pt, axis=0))) + np.sum(np.square(np.linalg.norm(Q, axis=1)));
+    print("loss", loss)
+    M = M.tocsr()
+    return loss
+
+def gradient_loss_px(M, Q, Pt):
+	gradient = 0; lamda1=0.5
+	M = M.tocoo()
+	for d in range (len(M.data)):
+	    r = M.data[d]; x = M.row[d]; i = M.col[d];
+	    gradient += (r - (np.dot(Q[x,:], Pt[:,i]))) * np.array(Q[x,:])
+	gradient = -2 * gradient
+	gradient += 2*lamda1*(np.sum(Pt, axis=0))
+	M = M.tocsr()
+	return gradient
+
+def gradient_loss_qi(M, Q, Pt):
+	gradient = 0; lamda2=0.5
+	M = M.tocoo()
+	for d in range (len(M.data)):
+	    r = M.data[d]; x = M.row[d]; i = M.col[d];
+	    gradient += (r - (np.dot(Q[x,:], Pt[:,i]))) * np.array(Pt[:,i])
+	gradient = -2 * gradient
+	gradient += 2*lamda2*(np.sum(Q, axis=1))
+			
+    
+
+def gradient_descent(M, Pt, Q):
+    print("M size", M.shape)
+    print("Q[0,:] size", Q[0,:].shape)
+    print("Pt[:,0] size", Pt[:,0].shape)
+    print("num of element in M", len(M.data))
+    loss = calc_loss(M, Q, Pt)
     return None
 
 def original_stochastic_gradient_descent(M, P, Q):
@@ -265,7 +312,9 @@ resulting_sparse_matrix, test_set = pick_random_test_set(resulting_sparse_matrix
 
 # Initial P & Q values obtained using SVD
 Q, Pt = singular_value_decomp(resulting_sparse_matrix)
+
 # Perform AO using P,Q
+gradient_descent(resulting_sparse_matrix, Pt, Q)
 
 
 #find_method(resulting_sparse_matrix, Q, Pt.T)
