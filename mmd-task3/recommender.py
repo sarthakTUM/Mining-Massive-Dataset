@@ -173,26 +173,30 @@ def calc_loss(M, Q, Pt):
     return loss
 
 def gradient_loss_px(M, Q, Pt):
-	gradient = 0; lamda1=0.5
+	gradient = 0; lamda1 = 0.5;
 	M = M.tocoo()
 	for d in range (len(M.data)):
 	    r = M.data[d]; x = M.row[d]; i = M.col[d];
 	    gradient += (r - (np.dot(Q[x,:], Pt[:,i]))) * np.array(Q[x,:])
 	gradient = -2 * gradient
-	gradient += 2*lamda1*(np.sum(Pt, axis=0))
+	print("gradientP shape", gradient.shape)
+	gradient += 2*lamda1*(np.sum(Pt, axis=1))
+	print("gradientP shape", gradient.shape)
 	M = M.tocsr()
 	return gradient
 
 def gradient_loss_qi(M, Q, Pt):
-	gradient = 0; lamda2=0.5
+	gradient = 0; lamda2 = 0.5;
 	M = M.tocoo()
 	for d in range (len(M.data)):
 	    r = M.data[d]; x = M.row[d]; i = M.col[d];
-	    gradient += (r - (np.dot(Q[x,:], Pt[:,i]))) * np.array(Pt[:,i])
+	    gradient += (r - (np.dot(Q[x,:], Pt[:,i]))) * np.array(Pt[:, i])
 	gradient = -2 * gradient
-	gradient += 2*lamda2*(np.sum(Q, axis=1))
-			
-    
+	print("gradientQ shape", gradient.shape)
+	gradient += 2*lamda2*(np.sum(Q, axis=0))
+	print("gradientQ shape", gradient.shape)
+	M = M.tocsr()
+	return gradient
 
 def gradient_descent(M, Pt, Q):
     print("M size", M.shape)
@@ -200,6 +204,8 @@ def gradient_descent(M, Pt, Q):
     print("Pt[:,0] size", Pt[:,0].shape)
     print("num of element in M", len(M.data))
     loss = calc_loss(M, Q, Pt)
+    gradient_loss_px(M, Q, Pt)
+    gradient_loss_qi(M, Q, Pt)
     return None
 
 def original_stochastic_gradient_descent(M, P, Q):
