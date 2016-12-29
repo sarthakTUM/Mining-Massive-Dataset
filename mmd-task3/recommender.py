@@ -172,6 +172,7 @@ def calc_loss(M, Q, Pt):
     M = M.tocsr()
     return loss
 
+#M is in coo format
 def gradient_loss_px(M, Q, Pt, i):
 	gradient = 0; lamda1 = 0.5;
 	i_indices = np.where(M.col == i)[0]
@@ -181,10 +182,12 @@ def gradient_loss_px(M, Q, Pt, i):
 	    gradient += (r - (np.dot(Q[x,:], Pt[:,i1]))) * np.array(Q[x,:])
 	gradient = -2 * gradient
 	#print("gradientP shape", gradient.shape)
-	gradient += 2*lamda1*(np.sum(Pt, axis=1))
-	#print("gradientP shape", gradient.shape)
+	#gradient += 2*lamda1*(np.sum(Pt, axis=1))
+	gradient += 2*lamda1*Pt[:,i]
+	#print("gradientP", gradient)
 	return gradient
 
+# M is in coo format
 def gradient_loss_qi(M, Q, Pt, x):
 	gradient = 0; lamda2 = 0.5;
 	x_indices = np.where(M.row == x)[0]
@@ -194,28 +197,39 @@ def gradient_loss_qi(M, Q, Pt, x):
 	    gradient += (r - (np.dot(Q[x1,:], Pt[:,i]))) * np.array(Pt[:,i])
 	gradient = -2 * gradient
 	#print("gradientQ shape", gradient.shape)
-	gradient += 2*lamda2*(np.sum(Q, axis=0))
+	#gradient += 2*lamda2*(np.sum(Q, axis=0))
+	gradient += 2*lamda2*Q[x,:]
 	#print("gradientQ shape", gradient.shape)
 	return gradient
 
 def gradient_descent(M, Pt, Q):
-    lr_rate = 0.3
+    lr_rate = 0.08
     print("M size", M.shape)
-    print("Q[0,:] size", Q[0,:].shape)
-    print("Pt[:,0] size", Pt[:,0].shape)
+    print("initial Q size", Q.shape)
+    print("initial Pt size", Pt.shape)
     print("num of element in M", len(M.data))
     loss1 = calc_loss(M, Q, Pt)
     print("P shape index", Pt.shape[0], Pt.shape[1])
-    M = M.tocoo()
-    for i in range(Pt.shape[1]):
-       Pt[:, i] = Pt[:, i] - lr_rate * gradient_loss_px(M, Q, Pt, i)
-    for x in range(Q.shape[0]):
-       Q[x,:] = Q[x,:] - lr_rate * gradient_loss_qi(M, Q, Pt, x)
-    print("Q size", Q.shape)
-    print("Pt size", Pt.shape)
-    M = M.tocsr()
-    loss2 = calc_loss(M, Q, Pt)
-    print("loss1", loss1, "loss2", loss2)
+    for iter in range(3):
+       M = M.tocoo()
+       for i in range(Pt.shape[1]):
+          #print("PAAA")
+          #print(Pt[:,i])
+          Pt[:, i] -= lr_rate * gradient_loss_px(M, Q, Pt, i)
+          #print("PBBB")
+          #print(Pt[:,i])
+
+       for x in range(Q.shape[0]):
+          #print("QAAA")
+          #print(Q[x,:])
+          Q[x,:] -= lr_rate * gradient_loss_qi(M, Q, Pt, x)
+          #print("QBBB")
+          #print(Q[x,:])
+       #print("final Q size", Q.shape)
+       #print("final Pt size", Pt.shape)
+       M = M.tocsr()
+       loss2 = calc_loss(M, Q, Pt)
+       print("loss1", loss1, "loss2", loss2)
     return None
 
 def original_stochastic_gradient_descent(M, P, Q):
