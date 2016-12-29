@@ -225,11 +225,14 @@ def gradient_descent(M, Pt, Q):
     print("num of element in M", len(M.data))
     loss1 = calc_loss(M, Q, Pt)
     print("P shape index", Pt.shape[0], Pt.shape[1])
-    for i in range(Pt.shape[1]):
+    #for i in range(Pt.shape[1]):
+    for i in range(100):
        Pt[:, i] = Pt[:, i] - lr_rate * gradient_loss_px(M, Q, Pt, i)
     #for x in range(Q.shape[0]):
     #   Q[x,:] = Q[x,:] - lr_rate * gradient_loss_qi(M, Q, Pt, x)
-    loss2 = calc_loss(M, Pt, Q)
+    print("Q size", Q.shape)
+    print("Pt size", Pt.shape)
+    loss2 = calc_loss(M, Q, Pt)
     print("loss1", loss1, "loss2", loss2)
     return None
 
