@@ -77,11 +77,11 @@ def binning(play_count, bin_size):
 def cold_start(user_song_matrix, min_threshold):
     #We need to remove songs & users with less or equal to min_threshold 
     #print(user_song_matrix)
-    user_song_matrix = user_song_matrix > 0
+    #user_song_matrix = user_song_matrix > 0
     user_song_matrix = user_song_matrix.astype(np.int)
     #print(user_song_matrix.toarray())
-        
-    songs_per_user = np.ravel(np.sum(user_song_matrix, axis=1)) #sum of row
+ 
+    songs_per_user = np.ravel(np.sum((user_song_matrix > 0), axis=1)) #sum of row
     users_to_delete = np.where(songs_per_user <= min_threshold)[0]
     
     ##set the users i.e rows to 0
@@ -95,7 +95,7 @@ def cold_start(user_song_matrix, min_threshold):
     ##set the songs i.e columns to 0
     user_song_matrix = sp.csc_matrix(user_song_matrix)
     
-    users_per_song = np.ravel(np.sum(user_song_matrix, axis=0)) #sum of column
+    users_per_song = np.ravel(np.sum((user_song_matrix > 0), axis=0)) #sum of column
     songs_to_delete = np.where(users_per_song <= min_threshold)[0]
 
     for i in songs_to_delete:
@@ -167,7 +167,7 @@ def calc_loss(M, Q, Pt):
 		#TODO FIXME which one is correct ?
         #loss += math.pow((r - (np.dot(Q[i,:],Pt[:,x]))),2)
         loss += math.pow((r - (np.dot(Q[x,:],Pt[:,i]))),2)
-    loss = loss + np.sum(np.square(np.linalg.norm(Pt, axis=0))) + np.sum(np.square(np.linalg.norm(Q, axis=1)));
+    loss = loss + lamda1*(np.sum(np.square(np.linalg.norm(Pt, axis=0)))) + lamda2*(np.sum(np.square(np.linalg.norm(Q, axis=1))));
     print("loss", loss)
     M = M.tocsr()
     return loss
