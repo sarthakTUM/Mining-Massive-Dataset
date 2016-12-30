@@ -153,83 +153,61 @@ def pick_random_test_set(M, number_of_random_elements):
     M_s = sp.csr_matrix(M_s)
     return M_s, random_picked_values
 
+#M is in csr format
 def calc_loss(M, Q, Pt):
     loss = 0
 	#TODO we have to optimize it
-    lamda1 = 0.5;lamda2 = 0.5
-    M = M.tocoo()
-    print("size of data", len(M.data)); print("size of row", len(M.row)) 
-    print("size of col", len(M.col))
-	
-    for d in range (len(M.data)):
-        r = M.data[d]; x = M.row[d]; i = M.col[d];
-        #print("r x i d", r,x,i,d)
-		#TODO FIXME which one is correct ?
-        #loss += math.pow((r - (np.dot(Q[i,:],Pt[:,x]))),2)
-        loss += math.pow((r - (np.dot(Q[x,:],Pt[:,i]))),2)
-    loss = loss + lamda1*(np.sum(np.square(np.linalg.norm(Pt, axis=0)))) + lamda2*(np.sum(np.square(np.linalg.norm(Q, axis=1))));
-    print("loss", loss)
-    M = M.tocsr()
+    lamda1 = 0.3;lamda2 = 0.3
+
+    loss = ((M - np.dot(Q,Pt)).power(2)).sum()
+    loss += lamda1*(np.sum(np.square(spl.norm(Pt, axis=0)))) + lamda2*(np.sum(np.square(spl.norm(Q, axis=1))))
     return loss
 
-#M is in coo format
-def gradient_loss_px(M, Q, Pt, i):
-	gradient = 0; lamda1 = 0.5;
-	i_indices = np.where(M.col == i)[0]
-	#print("i_indices length", len(i_indices), "value", M.col[i_indices[0]], M.col[i_indices[1]], M.col[i_indices[2]], i)
-	for i_1 in i_indices:
-	    r = M.data[i_1]; x = M.row[i_1]; i1 = M.col[i_1];
-	    gradient += (r - (np.dot(Q[x,:], Pt[:,i1]))) * np.transpose(np.array(Q[x,:]))
-	gradient = -2 * gradient
-	#print("gradientP shape", gradient.shape)
-	#gradient += 2*lamda1*(np.sum(Pt, axis=1))
-	gradient += 2*lamda1*Pt[:,i1]
-	#print("gradientP", gradient)
+#M is in csr format
+def gradient_loss_P(M, Q, Pt):
+	gradient = 0; lamda1 = 0.3;
+
+	#print("shape Q", Q.shape, "Pt", Pt.shape)
+	gradient = ((-2 * (M - Q.dot(Pt))).transpose()).dot(Q)
+	gradient = gradient.transpose()
+	print("shape gradient", gradient.shape)
+	gradient += (2*lamda1*Pt)
+	print("shape gradient after 2lamda1", gradient.shape)
 	return gradient
 
-# M is in coo format
-def gradient_loss_qi(M, Q, Pt, x):
-	gradient = 0; lamda2 = 0.5;
-	x_indices = np.where(M.row == x)[0]
-	#print("x_indicies", x_indices)
-	for x_1 in x_indices:
-	    r = M.data[x_1]; x1 = M.row[x_1]; i = M.col[x_1];
-	    gradient += (r - (np.dot(Q[x1,:], Pt[:,i]))) * np.transpose(np.array(Pt[:,i]))
-	gradient = -2 * gradient
-	#print("gradientQ shape", gradient.shape)
-	#gradient += 2*lamda2*(np.sum(Q, axis=0))
-	gradient += (2*lamda2*Q[x1,:])
-	#print("gradientQ shape", gradient.shape)
+# M is in csr format
+def gradient_loss_Q(M, Q, Pt):
+	gradient = 0; lamda2 = 0.3;
+
+	#print("shape Q", Q.shape, "Pt", Pt.shape)
+	gradient = ((-2 * (M - Q.dot(Pt)))).dot(Pt.transpose())
+	gradient += (2*lamda2*Q)
+	print("shape gradient after 2lamda1", gradient.shape)
 	return gradient
 
 def gradient_descent(M, Pt, Q):
-    lr_rate = 0.08
+    lr_rate = 0.004
     print("M size", M.shape)
     print("initial Q size", Q.shape)
     print("initial Pt size", Pt.shape)
     print("num of element in M", len(M.data))
-    loss1 = calc_loss(M, Q, Pt)
     print("P shape index", Pt.shape[0], Pt.shape[1])
-    for iter in range(3):
-       M = M.tocoo()
-       for i in range(Pt.shape[1]):
-          #print("PAAA")
-          #print(Pt[:,i])
-          Pt[:, i] -= (lr_rate * gradient_loss_px(M, Q, Pt, i))
-          #print("PBBB")
-          #print(Pt[:,i])
 
-       for x in range(Q.shape[0]):
-          #print("QAAA")
-          #print(Q[x,:])
-          Q[x,:] -= (lr_rate * gradient_loss_qi(M, Q, Pt, x))
-          #print("QBBB")
-          #print(Q[x,:])
+    Q = sp.csr_matrix(Q)
+    Pt = sp.csr_matrix(Pt)
+
+    loss1 = calc_loss(M, Q, Pt)
+    print("loss1", loss1)
+
+    for iter in range(3):
+       temp0 = Pt - (lr_rate * gradient_loss_P(M, Q, Pt))
+       temp1 = Q - (lr_rate * gradient_loss_Q(M, Q, Pt))
+       Pt = temp0
+       Q = temp1
        #print("final Q size", Q.shape)
        #print("final Pt size", Pt.shape)
-       M = M.tocsr()
        loss2 = calc_loss(M, Q, Pt)
-       print("loss1", loss1, "loss2", loss2)
+       print("loss2", loss2)
     return None
 
 def original_stochastic_gradient_descent(M, P, Q):
