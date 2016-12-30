@@ -179,11 +179,11 @@ def gradient_loss_px(M, Q, Pt, i):
 	#print("i_indices length", len(i_indices), "value", M.col[i_indices[0]], M.col[i_indices[1]], M.col[i_indices[2]], i)
 	for i_1 in i_indices:
 	    r = M.data[i_1]; x = M.row[i_1]; i1 = M.col[i_1];
-	    gradient += (r - (np.dot(Q[x,:], Pt[:,i1]))) * np.array(Q[x,:])
+	    gradient += (r - (np.dot(Q[x,:], Pt[:,i1]))) * np.transpose(np.array(Q[x,:]))
 	gradient = -2 * gradient
 	#print("gradientP shape", gradient.shape)
 	#gradient += 2*lamda1*(np.sum(Pt, axis=1))
-	gradient += 2*lamda1*Pt[:,i]
+	gradient += 2*lamda1*Pt[:,i1]
 	#print("gradientP", gradient)
 	return gradient
 
@@ -194,11 +194,11 @@ def gradient_loss_qi(M, Q, Pt, x):
 	#print("x_indicies", x_indices)
 	for x_1 in x_indices:
 	    r = M.data[x_1]; x1 = M.row[x_1]; i = M.col[x_1];
-	    gradient += (r - (np.dot(Q[x1,:], Pt[:,i]))) * np.array(Pt[:,i])
+	    gradient += (r - (np.dot(Q[x1,:], Pt[:,i]))) * np.transpose(np.array(Pt[:,i]))
 	gradient = -2 * gradient
 	#print("gradientQ shape", gradient.shape)
 	#gradient += 2*lamda2*(np.sum(Q, axis=0))
-	gradient += 2*lamda2*Q[x,:]
+	gradient += (2*lamda2*Q[x1,:])
 	#print("gradientQ shape", gradient.shape)
 	return gradient
 
@@ -215,14 +215,14 @@ def gradient_descent(M, Pt, Q):
        for i in range(Pt.shape[1]):
           #print("PAAA")
           #print(Pt[:,i])
-          Pt[:, i] -= lr_rate * gradient_loss_px(M, Q, Pt, i)
+          Pt[:, i] -= (lr_rate * gradient_loss_px(M, Q, Pt, i))
           #print("PBBB")
           #print(Pt[:,i])
 
        for x in range(Q.shape[0]):
           #print("QAAA")
           #print(Q[x,:])
-          Q[x,:] -= lr_rate * gradient_loss_qi(M, Q, Pt, x)
+          Q[x,:] -= (lr_rate * gradient_loss_qi(M, Q, Pt, x))
           #print("QBBB")
           #print(Q[x,:])
        #print("final Q size", Q.shape)
