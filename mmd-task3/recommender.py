@@ -155,38 +155,38 @@ def pick_random_test_set(M, number_of_random_elements):
 
 #M is in csr format
 def calc_loss(M, Q, Pt):
-    loss = 0
 	#TODO we have to optimize it
     lamda1 = 0.3;lamda2 = 0.3
 
-    loss = ((M - np.dot(Q,Pt)).power(2)).sum()
-    loss += lamda1*(np.sum(np.square(spl.norm(Pt, axis=0)))) + lamda2*(np.sum(np.square(spl.norm(Q, axis=1))))
+    loss = ((M - Q.dot(Pt)).power(2)).sum()
+    #loss += lamda1*(np.sum(np.square(spl.norm(Pt, axis=0)))) + lamda2*(np.sum(np.square(spl.norm(Q, axis=1))))
     return loss
 
 #M is in csr format
 def gradient_loss_P(M, Q, Pt):
-	gradient = 0; lamda1 = 0.3;
+	#lamda1 = 0.3
 
 	#print("shape Q", Q.shape, "Pt", Pt.shape)
 	gradient = ((-2 * (M - Q.dot(Pt))).transpose()).dot(Q)
 	gradient = gradient.transpose()
 	print("shape gradient", gradient.shape)
-	gradient += (2*lamda1*Pt)
-	print("shape gradient after 2lamda1", gradient.shape)
+	#gradient += (2*lamda1*Pt)
+	#print("shape gradient after 2lamda1", gradient.shape)
+	#print(gradient)
 	return gradient
 
 # M is in csr format
 def gradient_loss_Q(M, Q, Pt):
-	gradient = 0; lamda2 = 0.3;
+	#lamda2 = 0.3
 
 	#print("shape Q", Q.shape, "Pt", Pt.shape)
 	gradient = ((-2 * (M - Q.dot(Pt)))).dot(Pt.transpose())
-	gradient += (2*lamda2*Q)
-	print("shape gradient after 2lamda1", gradient.shape)
+	#gradient += (2*lamda2*Q)
+	#print("shape gradient after 2lamda1", gradient.shape)
 	return gradient
 
 def gradient_descent(M, Pt, Q):
-    lr_rate = 0.004
+    lr_rate = 1
     print("M size", M.shape)
     print("initial Q size", Q.shape)
     print("initial Pt size", Pt.shape)
@@ -199,11 +199,14 @@ def gradient_descent(M, Pt, Q):
     loss1 = calc_loss(M, Q, Pt)
     print("loss1", loss1)
 
-    for iter in range(3):
+    print(M-Q.dot(Pt))
+    for iter in range(6):
        temp0 = Pt - (lr_rate * gradient_loss_P(M, Q, Pt))
        temp1 = Q - (lr_rate * gradient_loss_Q(M, Q, Pt))
        Pt = temp0
        Q = temp1
+       print("sum of Pt & Q")
+       print(Pt.sum(), Q.sum())
        #print("final Q size", Q.shape)
        #print("final Pt size", Pt.shape)
        loss2 = calc_loss(M, Q, Pt)
