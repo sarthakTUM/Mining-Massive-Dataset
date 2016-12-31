@@ -158,29 +158,31 @@ def calc_loss(M, Q, Pt):
 	#TODO we have to optimize it
     lamda1 = 0.3;lamda2 = 0.3
 
+    M=M.tocsr()
     loss = ((M - Q.dot(Pt)).power(2)).sum()
     #loss += lamda1*(np.sum(np.square(spl.norm(Pt, axis=0)))) + lamda2*(np.sum(np.square(spl.norm(Q, axis=1))))
+    M=M.tocoo()
     return loss
 
 #M is in csr format
-def gradient_loss_P(M, Q, Pt):
+def gradient_loss_Px(r, qx, pi):
 	#lamda1 = 0.3
 
-	#print("shape Q", Q.shape, "Pt", Pt.shape)
-	gradient = ((-2 * (M - Q.dot(Pt))).transpose()).dot(Q)
+	gradient = (-2 * (r - (qx.dot(pi)[0,0]))) * qx
 	gradient = gradient.transpose()
-	print("shape gradient", gradient.shape)
+	#print("shape gradientPx", gradient.shape)
 	#gradient += (2*lamda1*Pt)
 	#print("shape gradient after 2lamda1", gradient.shape)
 	#print(gradient)
 	return gradient
 
 # M is in csr format
-def gradient_loss_Q(M, Q, Pt):
+def gradient_loss_Qi(r, qx, pi):
 	#lamda2 = 0.3
 
-	#print("shape Q", Q.shape, "Pt", Pt.shape)
-	gradient = ((-2 * (M - Q.dot(Pt)))).dot(Pt.transpose())
+	gradient = (-2 * (r - (qx.dot(pi)[0,0]))) * pi
+	gradient = gradient.transpose()
+	#print("shape gradientQi", gradient.shape)
 	#gradient += (2*lamda2*Q)
 	#print("shape gradient after 2lamda1", gradient.shape)
 	return gradient
@@ -199,18 +201,21 @@ def gradient_descent(M, Pt, Q):
     loss1 = calc_loss(M, Q, Pt)
     print("loss1", loss1)
 
-    print(M-Q.dot(Pt))
-    for iter in range(6):
-       temp0 = Pt - (lr_rate * gradient_loss_P(M, Q, Pt))
-       temp1 = Q - (lr_rate * gradient_loss_Q(M, Q, Pt))
-       Pt = temp0
-       Q = temp1
-       print("sum of Pt & Q")
-       print(Pt.sum(), Q.sum())
-       #print("final Q size", Q.shape)
-       #print("final Pt size", Pt.shape)
-       loss2 = calc_loss(M, Q, Pt)
-       print("loss2", loss2)
+    #print(M-Q.dot(Pt))
+    M = M.tocoo();
+
+    for iter in range(3):
+        for d in range(len(M.data)):
+            r=M.data[d]; x=M.row[d]; i=M.col[d];
+
+            temp0 = Pt[:,i] - (lr_rate * gradient_loss_Px(r, Q[x,:], Pt[:,i]))
+            temp1 = Q[x,:] - (lr_rate * gradient_loss_Qi(r, Q[x,:], Pt[:,i]))
+      
+            Pt[:,i] = temp0
+            Q[x,:] = temp1
+
+        loss2 = calc_loss(M, Q, Pt)
+        print("loss2", loss2)
     return None
 
 def original_stochastic_gradient_descent(M, P, Q):
