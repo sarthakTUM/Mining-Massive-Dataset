@@ -164,6 +164,25 @@ def calc_loss(M, Q, Pt):
     M=M.tocoo()
     return loss
 
+def calc_loss_1(M, Q, Pt):
+    loss = 0
+	#TODO we have to optimize it
+    #lamda1 = 0.5;lamda2 = 0.5
+    #M = M.tocoo()
+    #print("size of data", len(M.data)); print("size of row", len(M.row)) 
+    #print("size of col", len(M.col))
+	
+    for d in range (len(M.data)):
+        r = M.data[d]; x = M.row[d]; i = M.col[d];
+        #print("r x i d", r,x,i,d)
+		#TODO FIXME which one is correct ?
+        #loss += math.pow((r - (np.dot(Q[i,:],Pt[:,x]))),2)
+        loss += math.pow((r - (Q[x,:].dot(Pt[:,i])[0,0])),2)
+    #loss = loss + lamda1*(np.sum(np.square(np.linalg.norm(Pt, axis=0)))) + lamda2*(np.sum(np.square(np.linalg.norm(Q, axis=1))));
+    #print("loss", loss)
+    #M = M.tocsr()
+    return loss
+
 #M is in csr format
 def gradient_loss_Px(r, qx, pi):
 	#lamda1 = 0.3
@@ -198,11 +217,12 @@ def gradient_descent(M, Pt, Q):
     Q = sp.csr_matrix(Q)
     Pt = sp.csr_matrix(Pt)
 
+    M = M.tocoo();
     loss1 = calc_loss(M, Q, Pt)
     print("loss1", loss1)
 
     #print(M-Q.dot(Pt))
-    M = M.tocoo();
+    #M = M.tocoo();
 
     for iter in range(3):
         for d in range(len(M.data)):
@@ -216,6 +236,7 @@ def gradient_descent(M, Pt, Q):
 
         loss2 = calc_loss(M, Q, Pt)
         print("loss2", loss2)
+    M=M.tocsr()
     return None
 
 def original_stochastic_gradient_descent(M, P, Q):
